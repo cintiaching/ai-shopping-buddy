@@ -23,3 +23,9 @@ Follow these steps to set up the environment.
     ```
    The [mistral](https://ollama.com/library/mistral) model is used as it is small and runs fast locally. 
    It can be easily switch to other models in the Ollama library.
+
+
+3. To interact with the chatbot, run
+   ```bash
+   python chatbots/shopping_buddy.py
+   ```
