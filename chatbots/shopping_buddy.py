@@ -32,28 +32,33 @@ def print_buddy_response(user_input: str, config: dict):
             print("Shopping Buddy:", value["messages"][-1].content)
 
 
-llm = build_llm()
+def shopping_buddy_langgraph():
+    builder = StateGraph(State)
+    builder.add_node("chatbot", chatbot)
+    builder.add_edge(START, "chatbot")
+    builder.add_edge("chatbot", END)
 
-builder = StateGraph(State)
-builder.add_node("chatbot", chatbot)
-builder.add_edge(START, "chatbot")
-builder.add_edge("chatbot", END)
-
-# adding thread-level persistence
-memory = MemorySaver()
-graph = builder.compile(checkpointer=memory)
+    # adding thread-level persistence
+    memory = MemorySaver()
+    graph = builder.compile(checkpointer=memory)
+    return graph
 
 
-thread_id = 1
-print(f"""Starting thread {thread_id}, type "quit", "exit" or "q" to exit chatbot. 
+if __name__ == "__main__":
+    # allow interaction with chatbot
+    llm = build_llm()
+    graph = shopping_buddy_langgraph()
+
+    thread_id = 1
+    print(f"""Starting thread {thread_id}, type "quit", "exit" or "q" to exit chatbot. 
 Type "clear" to clear memory and start a new thread.""")
-while True:
-    user_input = input("User: ")
-    if user_input.lower() in ["quit", "exit", "q"]:
-        print("Shopping Buddy: Goodbye!")
-        break
-    if user_input.lower() in ["clear"]:
-        thread_id += 1
-    else:
-        config = {"configurable": {"thread_id": thread_id}}
-        print_buddy_response(user_input, config)
+    while True:
+        user_input = input("User: ")
+        if user_input.lower() in ["quit", "exit", "q"]:
+            print("Shopping Buddy: Goodbye!")
+            break
+        if user_input.lower() in ["clear"]:
+            thread_id += 1
+        else:
+            config = {"configurable": {"thread_id": thread_id}}
+            print_buddy_response(user_input, config)
