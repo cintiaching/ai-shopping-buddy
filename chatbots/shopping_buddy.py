@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Dict, List
 
 from langchain_core.messages import AnyMessage
 from langgraph.constants import END
@@ -21,7 +21,7 @@ def build_llm() -> ChatOllama:
     return llm
 
 
-def chatbot(state: State):
+def chatbot(state: State) -> Dict[str, List[AnyMessage]]:
     response = llm.invoke(state["messages"])
     return {"messages": [response]}
 
