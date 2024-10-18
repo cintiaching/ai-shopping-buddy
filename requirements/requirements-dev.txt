@@ -6,3 +6,6 @@ langchain-ollama
 
 matplotlib
 pillow
+
+pytest
+pytest-mock

@@ -6,3 +6,6 @@ langchain-databricks
 
 matplotlib
 pillow
+
+pytest
+pytest-mock
