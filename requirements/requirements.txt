@@ -1,0 +1,11 @@
+langchain
+langchain-core
+langchain-community
+langgraph
+langchain-databricks
+
+matplotlib
+pillow
+
+pytest
+pytest-mock
