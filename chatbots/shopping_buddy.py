@@ -10,6 +10,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, add_messages
 
 from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference
+from chatbots.recommend import Recommendation
+from chatbots.vectorstore.vector_search import vector_search_product
 
 logger = logging.getLogger("chatbots")
 logger.setLevel(logging.DEBUG)
@@ -32,6 +34,7 @@ class State(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
 
     customer_preference: CustomerPreference
+    recommendation: Recommendation
 
 
 def build_llm() -> ChatOllama:
@@ -108,6 +111,19 @@ def preference_router(state):
     return "get_preference"
 
 
+def match_products(state: State):
+    logger.debug("----------match_product----------")
+    # format customer_preference
+    query_text = ... state["customer_preference"]
+    # vector search
+    search_result = vector_search_product(query_text, columns=["text"])
+    if len(search_result):
+        ...
+        state["recommendation"] = Recommendation(product_ids=[...])
+    return state
+
+
+
 def print_buddy_response(input_message_list: list, config: dict):
     for event in graph.stream({"messages": input_message_list}, config=config):
         for value in event.values():
@@ -124,12 +140,14 @@ def shopping_buddy_graph_builder():
     builder.add_node("manage_state", manage_state)
     builder.add_node("greeting", lambda state: greeting(state))
     builder.add_node("gather_preference", gather_preference)
+    builder.add_node("match_products", match_products)
 
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
     builder.add_conditional_edges("greeting", greeting_router, [END, "get_preference"])
     builder.add_conditional_edges("get_preference", preference_router, ["gather_preference", "get_preference", END])
-    builder.add_edge("gather_preference", END)
+    builder.add_edge("gather_preference", "match_products")
+    builder.add_edge("match_products", END)
     return builder
 
 
