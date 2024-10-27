@@ -16,3 +16,4 @@ def vector_search_product(query_text: str, columns: List[str], num_results: int=
     )
     return results
     
+    
