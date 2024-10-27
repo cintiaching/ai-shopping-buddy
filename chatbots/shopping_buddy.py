@@ -83,8 +83,8 @@ def get_preference(state: State) -> State:
     return state
 
 
-def add_tool_message(state: State):
-    logger.debug("----------add_tool_message----------")
+def gather_preference(state: State):
+    logger.debug("----------gather_preference----------")
     state["customer_preference"] = parse_customer_preference(state["messages"][-1].tool_calls[0]["args"])
     return {
         "messages": [
@@ -99,8 +99,8 @@ def add_tool_message(state: State):
 def preference_router(state):
     messages = state["messages"]
     if isinstance(messages[-1], AIMessage) and messages[-1].tool_calls:
-        logger.debug("ROUTER: add_tool_message")
-        return "add_tool_message"
+        logger.debug("ROUTER: gather_preference")
+        return "gather_preference"
     elif not isinstance(messages[-1], HumanMessage):
         logger.debug("ROUTER: END")
         return END
@@ -123,13 +123,13 @@ def shopping_buddy_graph_builder():
     builder.add_node("get_preference", get_preference)
     builder.add_node("manage_state", manage_state)
     builder.add_node("greeting", lambda state: greeting(state))
-    builder.add_node("add_tool_message", add_tool_message)
+    builder.add_node("gather_preference", gather_preference)
 
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
     builder.add_conditional_edges("greeting", greeting_router, [END, "get_preference"])
-    builder.add_conditional_edges("get_preference", preference_router, ["add_tool_message", "get_preference", END])
-    builder.add_edge("add_tool_message", END)
+    builder.add_conditional_edges("get_preference", preference_router, ["gather_preference", "get_preference", END])
+    builder.add_edge("gather_preference", END)
     return builder
 
 
