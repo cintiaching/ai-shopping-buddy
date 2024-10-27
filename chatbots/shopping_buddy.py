@@ -41,7 +41,7 @@ def build_llm() -> ChatOllama:
 
 
 def manage_state(state: State) -> State:
-    print("----------manage_state----------")
+    logger.debug("----------manage_state----------")
     """Helper function to manage the state of the graph during back-and-forth conversation"""
     if len(state["messages"]) <= 1:
         # empty input / only greeting message
@@ -53,16 +53,16 @@ def manage_state(state: State) -> State:
 
 def greeting_router(state: State) -> str:
     if state["current_user_input"] is None:
-        print("ROUTER: to the end")
+        logger.debug("ROUTER: to the end")
         return END
     else:
-        print("ROUTER: get_preference")
+        logger.debug("ROUTER: get_preference")
         return "get_preference"
 
 
 def greeting(state: State) -> State:
     """Greeting message to the customer"""
-    print("----------greeting----------")
+    logger.debug("----------greeting----------")
     if state["messages"]:
         # already greeted the user
         state["messages"] = add_messages(state["messages"], [])
@@ -73,7 +73,7 @@ def greeting(state: State) -> State:
 
 
 def get_preference(state: State) -> State:
-    print("----------get_preference----------")
+    logger.debug("----------get_preference----------")
     messages = get_customer_preference(state["messages"])
     state["messages"] = add_messages(state["messages"], messages)
     response = llm_with_preference_tools.invoke(messages)
@@ -84,7 +84,7 @@ def get_preference(state: State) -> State:
 def print_buddy_response(input_message_list: list, config: dict):
     for event in graph.stream({"messages": input_message_list}, config=config):
         for value in event.values():
-            print(value)
+            logger.debug(value)
             if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
                 print("Shopping Buddy:", value["messages"][-1].content)
 
