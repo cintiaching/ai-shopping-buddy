@@ -1,21 +1,16 @@
-import pyspark.sql.functions as f
-from pyspark.sql import DataFrame
+from typing import List
+
+vector_search_endpoint_name = "vector-search-products-endpoint"
+vs_index = "best_buy_products_index"
+vs_index_fullname = f"main.default.{vs_index}"
 
 
-def preprocess_product_data(data: DataFrame) -> DataFrame:
-    """Preprocess the Best Buy product data by adding a text column to the dataframe"""
-    data = data.withColumn(
-        "text",
-        f.format_string(
-            "Product Name: %s \n Product Category: %s \n Features Summary: %s \n"
-            "Features: %s \n Product Specifications: %s \n Final Price: %s",
-            f.col("title"),
-            f.col("root_category"),
-            f.col("features_summary"),
-            f.col("features"),
-            f.col("product_specifications"),
-            f.col("final_price"),
-        )
+def vector_search_product(query_text: str, columns: List[str], num_results: int=5):
+    index = vsc.get_index(endpoint_name=vector_search_endpoint_name, index_name=vs_index_fullname)
+    results = index.similarity_search(
+        query_text=query_text,
+        columns=columns,
+        num_results=num_results,
     )
-    return data
-
+    return results
+    
