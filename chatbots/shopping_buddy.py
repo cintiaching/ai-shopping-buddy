@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated, Optional
 
-from langchain_core.messages import AnyMessage, AIMessage
+from langchain_core.messages import AnyMessage, AIMessage, ToolMessage, HumanMessage
 from langgraph.constants import END
 from typing_extensions import TypedDict
 
@@ -9,7 +9,7 @@ from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, add_messages
 
-from chatbots.get_preference import CustomerPreference, get_customer_preference
+from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference
 
 logger = logging.getLogger("chatbots")
 logger.setLevel(logging.DEBUG)
@@ -30,6 +30,8 @@ Feel free to share as much or as little as you like, and I’ll do my best to re
 class State(TypedDict):
     current_user_input: Optional[str]
     messages: Annotated[list[AnyMessage], add_messages]
+
+    customer_preference: CustomerPreference
 
 
 def build_llm() -> ChatOllama:
@@ -81,25 +83,57 @@ def get_preference(state: State) -> State:
     return state
 
 
+def add_tool_message(state: State):
+    logger.debug("----------add_tool_message----------")
+    state["customer_preference"] = parse_customer_preference(state["messages"][-1].tool_calls[0]["args"])
+    return {
+        "messages": [
+            ToolMessage(
+                content="Customer preferences gathered",
+                tool_call_id=state["messages"][-1].tool_calls[0]["id"],
+            )
+        ]
+    }
+
+
+def preference_router(state):
+    messages = state["messages"]
+    if isinstance(messages[-1], AIMessage) and messages[-1].tool_calls:
+        logger.debug("ROUTER: add_tool_message")
+        return "add_tool_message"
+    elif not isinstance(messages[-1], HumanMessage):
+        logger.debug("ROUTER: END")
+        return END
+    logger.debug("ROUTER: get_preference")
+    return "get_preference"
+
+
 def print_buddy_response(input_message_list: list, config: dict):
     for event in graph.stream({"messages": input_message_list}, config=config):
         for value in event.values():
             logger.debug(value)
             if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
                 print("Shopping Buddy:", value["messages"][-1].content)
+                if value["messages"][-1].tool_calls:
+                    logger.debug(f"TOOL_CALLS: {value["messages"][-1].tool_calls}")
 
 
-def shopping_buddy_langgraph():
+def shopping_buddy_graph_builder():
     builder = StateGraph(State)
     builder.add_node("get_preference", get_preference)
     builder.add_node("manage_state", manage_state)
     builder.add_node("greeting", lambda state: greeting(state))
+    builder.add_node("add_tool_message", add_tool_message)
 
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
     builder.add_conditional_edges("greeting", greeting_router, [END, "get_preference"])
-    builder.add_edge("get_preference", END)
+    builder.add_conditional_edges("get_preference", preference_router, ["add_tool_message", "get_preference", END])
+    builder.add_edge("add_tool_message", END)
+    return builder
 
+
+def shopping_buddy_graph(builder):
     # adding thread-level persistence
     memory = MemorySaver()
     graph = builder.compile(checkpointer=memory)
@@ -110,7 +144,8 @@ if __name__ == "__main__":
     # allow interaction with chatbot
     llm = build_llm()
     llm_with_preference_tools = llm.bind_tools([CustomerPreference])
-    graph = shopping_buddy_langgraph()
+    builder = shopping_buddy_graph_builder()
+    graph = shopping_buddy_graph(builder)
 
     thread_id = 1
     print(f"""Starting thread {thread_id}, type "quit", "exit" or "q" to exit chatbot.

@@ -14,7 +14,8 @@ You should get the following information from them:
 
 If you are not able to discern this info, ask them to clarify! Do not attempt to wildly guess.
 Put None if customer did not give the desired information after asking. 
-After you are able to discern all the information, call the relevant tool."""
+After you are able to discern all the information, 
+give the customer a summary of the gathered preference and call the get_preference tool."""
 
 
 def get_customer_preference(messages):
@@ -26,3 +27,14 @@ class CustomerPreference(BaseModel):
     brand: Optional[List[str]]
     budget: Optional[List[str]]
     features: Optional[List[str]]
+
+
+def parse_customer_preference(args: dict) -> CustomerPreference:
+    """Parse the given args and create a CustomerPreference instance."""
+    customer_preference_data = {
+        "product_category": args["product_category"],
+        "brand": [args["brand"]] if args["brand"] != "None" else None,
+        "budget": [args["budget"]] if args["brand"] != "None" else None,
+        "features": [args["features"]] if args["brand"] != "None" else None,
+    }
+    return CustomerPreference(**customer_preference_data)
