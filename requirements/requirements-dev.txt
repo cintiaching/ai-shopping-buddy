@@ -9,3 +9,5 @@ pillow
 
 pytest
 pytest-mock
+
+polars
