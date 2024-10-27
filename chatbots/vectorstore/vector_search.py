@@ -1,5 +1,7 @@
 from typing import List
+from databricks.vector_search.client import VectorSearchClient
 
+vsc = VectorSearchClient()
 vector_search_endpoint_name = "vector-search-products-endpoint"
 vs_index = "best_buy_products_index"
 vs_index_fullname = f"main.default.{vs_index}"
