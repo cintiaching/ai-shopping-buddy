@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated, Optional
 
 from langchain_core.messages import AnyMessage, AIMessage
@@ -9,6 +10,9 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, add_messages
 
 from chatbots.get_preference import CustomerPreference, get_customer_preference
+
+logger = logging.getLogger("chatbots")
+logger.setLevel(logging.DEBUG)
 
 DEFAULT_GREETING = AIMessage(content="""👋 Hello and Welcome!
 
