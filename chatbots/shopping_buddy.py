@@ -72,9 +72,8 @@ def greeting(state: State) -> State:
 
 def get_preference(state: State) -> State:
     logger.debug("----------get_preference----------")
-    messages = get_customer_preference(state["messages"])
-    state["messages"] = add_messages(state["messages"], messages)
-    response = llm_with_preference_tools.invoke(messages)
+    system_messages = get_customer_preference(state["messages"])
+    response = llm_with_preference_tools.invoke(system_messages)
     state["messages"] = add_messages(state["messages"], [response])
     return state
 
@@ -82,14 +81,13 @@ def get_preference(state: State) -> State:
 def gather_preference(state: State):
     logger.debug("----------gather_preference----------")
     state["customer_preference"] = parse_customer_preference(state["messages"][-1].tool_calls[0]["args"])
-    return {
-        "messages": [
+    state["messages"] = add_messages(state["messages"], [
             ToolMessage(
                 content="Customer preferences gathered",
                 tool_call_id=state["messages"][-1].tool_calls[0]["id"],
             )
-        ]
-    }
+        ])
+    return state
 
 
 def preference_router(state):
@@ -156,7 +154,7 @@ def print_buddy_response(input_message_list: list, config: dict):
                 print("Shopping Buddy:", value["messages"][-1].content)
                 if value["messages"][-1].tool_calls:
                     logger.debug(f"TOOL_CALLS: {value['messages'][-1].tool_calls}")
-                    
+
 
 def main():
     # allow interaction with chatbot
