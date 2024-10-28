@@ -109,7 +109,7 @@ def match_products(state: State):
     # format customer_preference
     query_text = format_customer_preference(state["customer_preference"])
     # vector search
-    search_result = vector_search_product(query_text, columns=["text"])
+    search_result = vector_search_product(query_text, columns=["product_id", "title", "text"])
     product_ids, similarity = process_search_result(search_result)
     if len(search_result):
         state["recommendation"] = Recommendation(product_ids=product_ids, score=similarity)
