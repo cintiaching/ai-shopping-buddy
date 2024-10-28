@@ -13,7 +13,7 @@ from chatbots.get_preference import CustomerPreference, get_customer_preference,
     format_customer_preference
 from chatbots.llm import build_llm
 from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, RECOMMENDATION_MESSAGE, \
-    retrieve_recommended_product_data
+    retrieve_recommended_product_data, format_recommendation_message
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
@@ -124,7 +124,9 @@ def recommend(state: State):
         state["messages"] = add_messages(state["messages"], AIMessage(content=NO_RECOMMENDATION_MESSAGE))
     # retrieve data for matched items
     state["recommended_product_data"] = retrieve_recommended_product_data(state["recommendation"])
-    state["messages"] = add_messages(state["messages"], AIMessage(content=RECOMMENDATION_MESSAGE.format()))
+    state["messages"] = add_messages(state["messages"],
+                                     AIMessage(
+                                         content=format_recommendation_message(state["recommended_product_data"])))
     return state
 
 
