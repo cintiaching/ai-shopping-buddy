@@ -5,11 +5,14 @@ from langchain_core.messages import AnyMessage, AIMessage, ToolMessage, HumanMes
 from langgraph.constants import END
 from typing_extensions import TypedDict
 
-from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, add_messages
 
-from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference
+from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference, \
+    format_customer_preference
+from chatbots.llm import build_llm
+from chatbots.recommend import Recommendation
+from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
 logger.setLevel(logging.DEBUG)
@@ -32,14 +35,7 @@ class State(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
 
     customer_preference: CustomerPreference
-
-
-def build_llm() -> ChatOllama:
-    llm = ChatOllama(
-        model="mistral",
-        temperature=0,
-    )
-    return llm
+    recommendation: Recommendation
 
 
 def manage_state(state: State) -> State:
@@ -76,31 +72,29 @@ def greeting(state: State) -> State:
 
 def get_preference(state: State) -> State:
     logger.debug("----------get_preference----------")
-    messages = get_customer_preference(state["messages"])
-    state["messages"] = add_messages(state["messages"], messages)
-    response = llm_with_preference_tools.invoke(messages)
+    system_messages = get_customer_preference(state["messages"])
+    response = llm_with_preference_tools.invoke(system_messages)
     state["messages"] = add_messages(state["messages"], [response])
     return state
 
 
-def add_tool_message(state: State):
-    logger.debug("----------add_tool_message----------")
+def gather_preference(state: State):
+    logger.debug("----------gather_preference----------")
     state["customer_preference"] = parse_customer_preference(state["messages"][-1].tool_calls[0]["args"])
-    return {
-        "messages": [
+    state["messages"] = add_messages(state["messages"], [
             ToolMessage(
                 content="Customer preferences gathered",
                 tool_call_id=state["messages"][-1].tool_calls[0]["id"],
             )
-        ]
-    }
+        ])
+    return state
 
 
 def preference_router(state):
     messages = state["messages"]
     if isinstance(messages[-1], AIMessage) and messages[-1].tool_calls:
-        logger.debug("ROUTER: add_tool_message")
-        return "add_tool_message"
+        logger.debug("ROUTER: gather_preference")
+        return "gather_preference"
     elif not isinstance(messages[-1], HumanMessage):
         logger.debug("ROUTER: END")
         return END
@@ -108,14 +102,17 @@ def preference_router(state):
     return "get_preference"
 
 
-def print_buddy_response(input_message_list: list, config: dict):
-    for event in graph.stream({"messages": input_message_list}, config=config):
-        for value in event.values():
-            logger.debug(value)
-            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
-                print("Shopping Buddy:", value["messages"][-1].content)
-                if value["messages"][-1].tool_calls:
-                    logger.debug(f"TOOL_CALLS: {value["messages"][-1].tool_calls}")
+def match_products(state: State):
+    logger.debug("----------match_product----------")
+    # format customer_preference
+    query_text = format_customer_preference(state["customer_preference"])
+    # vector search
+    search_result = vector_search_product(query_text, columns=["product_id", "title", "text"])
+    product_ids, similarity = process_search_result(search_result)
+    if len(search_result):
+        state["recommendation"] = Recommendation(product_ids=product_ids, score=similarity)
+        logger.debug(f"recommendations: {state['recommendation']}")
+    return state
 
 
 def shopping_buddy_graph_builder():
@@ -123,13 +120,15 @@ def shopping_buddy_graph_builder():
     builder.add_node("get_preference", get_preference)
     builder.add_node("manage_state", manage_state)
     builder.add_node("greeting", lambda state: greeting(state))
-    builder.add_node("add_tool_message", add_tool_message)
+    builder.add_node("gather_preference", gather_preference)
+    builder.add_node("match_products", match_products)
 
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
     builder.add_conditional_edges("greeting", greeting_router, [END, "get_preference"])
-    builder.add_conditional_edges("get_preference", preference_router, ["add_tool_message", "get_preference", END])
-    builder.add_edge("add_tool_message", END)
+    builder.add_conditional_edges("get_preference", preference_router, ["gather_preference", "get_preference", END])
+    builder.add_edge("gather_preference", "match_products")
+    builder.add_edge("match_products", END)
     return builder
 
 
@@ -140,12 +139,25 @@ def shopping_buddy_graph(builder):
     return graph
 
 
-if __name__ == "__main__":
+# global object
+llm = build_llm()
+llm_with_preference_tools = llm.bind_tools([CustomerPreference])
+builder = shopping_buddy_graph_builder()
+graph = shopping_buddy_graph(builder)
+
+
+def print_buddy_response(input_message_list: list, config: dict):
+    for event in graph.stream({"messages": input_message_list}, config=config):
+        for value in event.values():
+            logger.debug(value)
+            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
+                print("Shopping Buddy:", value["messages"][-1].content)
+                if value["messages"][-1].tool_calls:
+                    logger.debug(f"TOOL_CALLS: {value['messages'][-1].tool_calls}")
+
+
+def main():
     # allow interaction with chatbot
-    llm = build_llm()
-    llm_with_preference_tools = llm.bind_tools([CustomerPreference])
-    builder = shopping_buddy_graph_builder()
-    graph = shopping_buddy_graph(builder)
 
     thread_id = 1
     print(f"""Starting thread {thread_id}, type "quit", "exit" or "q" to exit chatbot.

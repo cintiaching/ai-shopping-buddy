@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Optional
 from databricks.vector_search.client import VectorSearchClient
 
 vsc = VectorSearchClient()
@@ -16,4 +16,13 @@ def vector_search_product(query_text: str, columns: List[str], num_results: int=
     )
     return results
     
-    
+
+def process_search_result(search_results) -> Tuple[Optional[List[str]], Optional[List[float]]]:
+    """Process search result from similarity_search, return only product ids and similarity scores"""
+    search_results = search_results["result"]
+    result_length = search_results["row_count"]
+    if result_length == 0:
+        return None, None
+    result_ids = [result[0] for result in search_results["data_array"]]
+    result_similarity = [result[-1] for result in search_results["data_array"]]
+    return result_ids, result_similarity

@@ -2,15 +2,16 @@
 An e-commerce conversational chatbot that gathers customer preferences to provide personalized product recommendations. 
 Developed for "Generative AI World Cup 2024: So you think you can hack" by Databricks.
 
-## 🚧 Early Development
+## ☁️ Databricks Setup
 
-This project is currently in early development. To minimize costs, 
-Ollama local model is used instead of model serving on Databricks. 
-We plan to transition to Databricks in the future.
+1. Refer to "Accessing the Dataset" section to obtain access to the dataset
+2. Get the Serving endpoints of `databricks-dbrx-instruct` on databricks
+3. Execute the `main.py` notebook, which serves as the entry script for the chatbot, to start chatting.
 
-## 🛠️ Local Setup
 
-Follow these steps to set up the environment.
+## 💻 Local Setup
+
+To run the chatbot locally, follow these steps to set up the environment.
 
 1. Install Dependencies
     ```bash
@@ -56,7 +57,7 @@ Schema({
 To access the dataset on databricks, follow these steps:
 1. Go to [Best Buy Products Dataset](https://dbc-dc755886-ab40.cloud.databricks.com/marketplace/consumer/listings/55c3365c-0a3b-403b-a8e0-73fca0469fff?o=2368250103410450)
 2. Click `Get Instant Access`
-3. Set Catelog name as `bright_data_best_buy_products_dataset`
+3. Set Catalog name as `bright_data_best_buy_products_dataset`
 
 The data will be available as `bright_data_best_buy_products_dataset.datasets.best_buy_products`
 
