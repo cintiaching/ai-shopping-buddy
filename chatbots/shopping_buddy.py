@@ -9,9 +9,10 @@ from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, add_messages
 
-from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference
+from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference, \
+    format_customer_preference
 from chatbots.recommend import Recommendation
-from chatbots.vectorstore.vector_search import vector_search_product
+from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
 logger.setLevel(logging.DEBUG)
@@ -114,14 +115,13 @@ def preference_router(state):
 def match_products(state: State):
     logger.debug("----------match_product----------")
     # format customer_preference
-    query_text = ... state["customer_preference"]
+    query_text = format_customer_preference(state["customer_preference"])
     # vector search
     search_result = vector_search_product(query_text, columns=["text"])
+    product_ids, similarity = process_search_result(search_result)
     if len(search_result):
-        ...
-        state["recommendation"] = Recommendation(product_ids=[...])
+        state["recommendation"] = Recommendation(product_ids=product_ids, score=similarity)
     return state
-
 
 
 def print_buddy_response(input_message_list: list, config: dict):
