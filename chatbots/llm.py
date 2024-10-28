@@ -7,9 +7,13 @@ if not IS_DATABRICKS:
     from langchain_ollama import ChatOllama
 
 
-def build_llm(model_name="databricks-meta-llama-3-1-70b-instruct") -> BaseChatModel:
+def build_llm(model_name="databricks-dbrx-instruct") -> BaseChatModel:
     if IS_DATABRICKS:
-        llm = ChatDatabricks(endpoint=model_name)
+        llm = ChatDatabricks(
+            target_uri="databricks",
+            endpoint=model_name,
+            temperature=0,
+        )
     else:
         # for local development purpose
         llm = ChatOllama(
