@@ -5,12 +5,12 @@ from langchain_core.messages import AnyMessage, AIMessage, ToolMessage, HumanMes
 from langgraph.constants import END
 from typing_extensions import TypedDict
 
-from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, add_messages
 
 from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference, \
     format_customer_preference
+from chatbots.llm import build_llm
 from chatbots.recommend import Recommendation
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
@@ -36,14 +36,6 @@ class State(TypedDict):
 
     customer_preference: CustomerPreference
     recommendation: Recommendation
-
-
-def build_llm() -> ChatOllama:
-    llm = ChatOllama(
-        model="mistral",
-        temperature=0,
-    )
-    return llm
 
 
 def manage_state(state: State) -> State:
