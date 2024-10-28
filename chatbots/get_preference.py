@@ -19,31 +19,31 @@ give the customer a summary of the gathered preference and call the get_preferen
 
 
 def get_customer_preference(messages):
-    return [SystemMessage(content=template)] + messages
+    return [SystemMessage(content=template)] + messages[1:] # omit greeting message
 
 
 class CustomerPreference(BaseModel):
     product_category: str
-    brand: Optional[List[str]]
-    budget: Optional[List[str]]
-    features: Optional[List[str]]
+    brand: str
+    budget: str
+    features: str
 
 
 def parse_customer_preference(args: dict) -> CustomerPreference:
     """Parse the given args from tool_calls and create a CustomerPreference instance."""
     customer_preference_data = {
         "product_category": args["product_category"],
-        "brand": [args["brand"]] if args["brand"] != "None" else None,
-        "budget": [args["budget"]] if args["brand"] != "None" else None,
-        "features": [args["features"]] if args["brand"] != "None" else None,
+        "brand": args["brand"],
+        "budget": args["budget"],
+        "features": args["features"],
     }
     return CustomerPreference(**customer_preference_data)
 
 
 def format_customer_preference(customer_preference: CustomerPreference) -> str:
     """Format the given CustomerPreference into a string representation"""
-    string = (f"Product Brand: {', '.join(customer_preference.brand)}"
+    string = (f"Product Brand: {customer_preference.brand}"
               f"Product Category: {customer_preference.product_category} \n"
-              f"Features: {', '.join(customer_preference.features)}"
-              f"Final Price: {', '.join(customer_preference.budget)}")
+              f"Features: {customer_preference.features}"
+              f"Final Price: {customer_preference.budget}")
     return string
