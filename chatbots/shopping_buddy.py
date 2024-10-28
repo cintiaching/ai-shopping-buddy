@@ -12,7 +12,7 @@ from langgraph.graph import StateGraph, START, add_messages
 from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference, \
     format_customer_preference
 from chatbots.llm import build_llm
-from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, RECOMMENDATION_MESSAGE, \
+from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, \
     retrieve_recommended_product_data, format_recommendation_message
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
@@ -37,7 +37,7 @@ class State(TypedDict):
 
     customer_preference: CustomerPreference
     recommendation: Recommendation
-    recommended_product_data: pl.Dataframe
+    recommended_product_data: pl.DataFrame
 
 
 def manage_state(state: State) -> State:
@@ -161,6 +161,7 @@ llm = build_llm()
 llm_with_preference_tools = llm.bind_tools([CustomerPreference])
 builder = shopping_buddy_graph_builder()
 graph = shopping_buddy_graph(builder)
+print(graph.get_graph().draw_mermaid())
 
 
 def print_buddy_response(input_message_list: list, config: dict):

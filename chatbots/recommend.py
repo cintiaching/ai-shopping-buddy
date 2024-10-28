@@ -14,7 +14,7 @@ class Recommendation(BaseModel):
     score: List[float]
 
 
-def retrieve_recommended_product_data(recommendation: Recommendation) -> pl.Dataframe:
+def retrieve_recommended_product_data(recommendation: Recommendation) -> pl.DataFrame:
     score_df = pl.DataFrame({
         "product_id": recommendation.product_ids,
         "score": recommendation.score
@@ -24,7 +24,7 @@ def retrieve_recommended_product_data(recommendation: Recommendation) -> pl.Data
     return result_df
 
 
-def format_recommendation_message(recommended_product_data: pl.Dataframe) -> str:
+def format_recommendation_message(recommended_product_data: pl.DataFrame) -> str:
     msg = "Here are the recommended products based on your preferences: \n"
     for row in recommended_product_data.iter_rows(named=True):
         msg += f"""{row["title"]} - {row["final_price"]}\n"""
