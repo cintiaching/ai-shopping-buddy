@@ -16,7 +16,6 @@ from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, RECOMM
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
-logger.setLevel(logging.DEBUG)
 
 DEFAULT_GREETING = AIMessage(content="""👋 Hello and Welcome!
 
