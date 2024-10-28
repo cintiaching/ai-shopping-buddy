@@ -1,5 +1,6 @@
 import logging
 from typing import Annotated, Optional
+import polars as pl
 
 from langchain_core.messages import AnyMessage, AIMessage, ToolMessage, HumanMessage
 from langgraph.constants import END
@@ -11,7 +12,7 @@ from langgraph.graph import StateGraph, START, add_messages
 from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference, \
     format_customer_preference
 from chatbots.llm import build_llm
-from chatbots.recommend import Recommendation
+from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, RECOMMENDATION_MESSAGE, retrieve_product_data
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
@@ -36,6 +37,7 @@ class State(TypedDict):
 
     customer_preference: CustomerPreference
     recommendation: Recommendation
+    recommended_product_data: pl.Dataframe
 
 
 def manage_state(state: State) -> State:
@@ -109,9 +111,20 @@ def match_products(state: State):
     # vector search
     search_result = vector_search_product(query_text, columns=["product_id", "title", "text"])
     product_ids, similarity = process_search_result(search_result)
-    if len(search_result):
+    if len(product_ids):
         state["recommendation"] = Recommendation(product_ids=product_ids, score=similarity)
         logger.debug(f"recommendations: {state['recommendation']}")
+    return state
+
+
+def recommend(state: State):
+    logger.debug("----------recommend----------")
+    if "recommendation" not in state:
+        # no recommendation
+        state["messages"] = add_messages(state["messages"], AIMessage(content=NO_RECOMMENDATION_MESSAGE))
+    # retrieve data for matched items
+    state["recommended_product_data"] = retrieve_product_data(state["recommendation"].product_ids)
+    state["messages"] = add_messages(state["messages"], AIMessage(content=RECOMMENDATION_MESSAGE.format()))
     return state
 
 
@@ -122,13 +135,15 @@ def shopping_buddy_graph_builder():
     builder.add_node("greeting", lambda state: greeting(state))
     builder.add_node("gather_preference", gather_preference)
     builder.add_node("match_products", match_products)
+    builder.add_node("recommend", recommend)
 
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
     builder.add_conditional_edges("greeting", greeting_router, [END, "get_preference"])
     builder.add_conditional_edges("get_preference", preference_router, ["gather_preference", "get_preference", END])
     builder.add_edge("gather_preference", "match_products")
-    builder.add_edge("match_products", END)
+    builder.add_edge("match_products", "recommend")
+    builder.add_edge("recommend", END)
     return builder
 
 
