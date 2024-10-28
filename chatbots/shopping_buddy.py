@@ -12,7 +12,8 @@ from langgraph.graph import StateGraph, START, add_messages
 from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference, \
     format_customer_preference
 from chatbots.llm import build_llm
-from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, RECOMMENDATION_MESSAGE, retrieve_product_data
+from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, RECOMMENDATION_MESSAGE, \
+    retrieve_recommended_product_data
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
@@ -83,11 +84,11 @@ def gather_preference(state: State):
     logger.debug("----------gather_preference----------")
     state["customer_preference"] = parse_customer_preference(state["messages"][-1].tool_calls[0]["args"])
     state["messages"] = add_messages(state["messages"], [
-            ToolMessage(
-                content="Customer preferences gathered",
-                tool_call_id=state["messages"][-1].tool_calls[0]["id"],
-            )
-        ])
+        ToolMessage(
+            content="Customer preferences gathered",
+            tool_call_id=state["messages"][-1].tool_calls[0]["id"],
+        )
+    ])
     return state
 
 
@@ -122,7 +123,7 @@ def recommend(state: State):
         # no recommendation
         state["messages"] = add_messages(state["messages"], AIMessage(content=NO_RECOMMENDATION_MESSAGE))
     # retrieve data for matched items
-    state["recommended_product_data"] = retrieve_product_data(state["recommendation"].product_ids)
+    state["recommended_product_data"] = retrieve_recommended_product_data(state["recommendation"])
     state["messages"] = add_messages(state["messages"], AIMessage(content=RECOMMENDATION_MESSAGE.format()))
     return state
 
