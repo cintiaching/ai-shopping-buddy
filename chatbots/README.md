@@ -10,14 +10,18 @@ graph TD;
 	get_preference(get_preference)
 	manage_state(manage_state)
 	greeting(greeting)
-	add_tool_message(add_tool_message)
+	gather_preference(gather_preference)
+	match_products(match_products)
+	recommend(recommend)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> manage_state;
-	add_tool_message --> __end__;
+	gather_preference --> match_products;
 	manage_state --> greeting;
+	match_products --> recommend;
+	recommend --> __end__;
 	greeting -.-> __end__;
 	greeting -.-> get_preference;
-	get_preference -.-> add_tool_message;
+	get_preference -.-> gather_preference;
 	get_preference -.-> __end__;
 	get_preference -.-> get_preference;
 	classDef default fill:#1e1e1e, stroke:#ffffff, color:#ffffff;
