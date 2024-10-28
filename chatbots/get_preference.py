@@ -30,7 +30,7 @@ class CustomerPreference(BaseModel):
 
 
 def parse_customer_preference(args: dict) -> CustomerPreference:
-    """Parse the given args and create a CustomerPreference instance."""
+    """Parse the given args from tool_calls and create a CustomerPreference instance."""
     customer_preference_data = {
         "product_category": args["product_category"],
         "brand": [args["brand"]] if args["brand"] != "None" else None,
@@ -38,3 +38,12 @@ def parse_customer_preference(args: dict) -> CustomerPreference:
         "features": [args["features"]] if args["brand"] != "None" else None,
     }
     return CustomerPreference(**customer_preference_data)
+
+
+def format_customer_preference(customer_preference: CustomerPreference) -> str:
+    """Format the given CustomerPreference into a string representation"""
+    string = (f"Product Brand: {", ".join(customer_preference.brand)}"
+              f"Product Category: {customer_preference.product_category} \n"
+              f"Features: {", ".join(customer_preference.features)}"
+              f"Final Price: {", ".join(customer_preference.budget)}")
+    return string
