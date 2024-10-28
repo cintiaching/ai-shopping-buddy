@@ -113,17 +113,8 @@ def match_products(state: State):
     product_ids, similarity = process_search_result(search_result)
     if len(search_result):
         state["recommendation"] = Recommendation(product_ids=product_ids, score=similarity)
+        logger.debug(f"recommendations: {state['recommendation']}")
     return state
-
-
-def print_buddy_response(input_message_list: list, config: dict):
-    for event in graph.stream({"messages": input_message_list}, config=config):
-        for value in event.values():
-            logger.debug(value)
-            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
-                print("Shopping Buddy:", value["messages"][-1].content)
-                if value["messages"][-1].tool_calls:
-                    logger.debug(f"TOOL_CALLS: {value["messages"][-1].tool_calls}")
 
 
 def shopping_buddy_graph_builder():
@@ -150,12 +141,25 @@ def shopping_buddy_graph(builder):
     return graph
 
 
-if __name__ == "__main__":
+# global object
+llm = build_llm()
+llm_with_preference_tools = llm.bind_tools([CustomerPreference])
+builder = shopping_buddy_graph_builder()
+graph = shopping_buddy_graph(builder)
+
+
+def print_buddy_response(input_message_list: list, config: dict):
+    for event in graph.stream({"messages": input_message_list}, config=config):
+        for value in event.values():
+            logger.debug(value)
+            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
+                print("Shopping Buddy:", value["messages"][-1].content)
+                if value["messages"][-1].tool_calls:
+                    logger.debug(f"TOOL_CALLS: {value['messages'][-1].tool_calls}")
+                    
+
+def main():
     # allow interaction with chatbot
-    llm = build_llm()
-    llm_with_preference_tools = llm.bind_tools([CustomerPreference])
-    builder = shopping_buddy_graph_builder()
-    graph = shopping_buddy_graph(builder)
 
     thread_id = 1
     print(f"""Starting thread {thread_id}, type "quit", "exit" or "q" to exit chatbot.

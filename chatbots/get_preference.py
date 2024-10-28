@@ -42,8 +42,8 @@ def parse_customer_preference(args: dict) -> CustomerPreference:
 
 def format_customer_preference(customer_preference: CustomerPreference) -> str:
     """Format the given CustomerPreference into a string representation"""
-    string = (f"Product Brand: {", ".join(customer_preference.brand)}"
+    string = (f"Product Brand: {', '.join(customer_preference.brand)}"
               f"Product Category: {customer_preference.product_category} \n"
-              f"Features: {", ".join(customer_preference.features)}"
-              f"Final Price: {", ".join(customer_preference.budget)}")
+              f"Features: {', '.join(customer_preference.features)}"
+              f"Final Price: {', '.join(customer_preference.budget)}")
     return string
