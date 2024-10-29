@@ -14,18 +14,18 @@ class Recommendation(BaseModel):
     score: List[float]
 
 
-def retrieve_recommended_product_data(recommendation: Recommendation) -> pl.DataFrame:
+def retrieve_recommended_product_data(recommendation: Recommendation) -> dict:
     score_df = pl.DataFrame({
         "product_id": recommendation.product_ids,
         "score": recommendation.score
     })
     recommended_df = product_data.filter(pl.col("product_id").is_in(recommendation.product_ids))
     result_df = recommended_df.join(score_df, on="product_id", how="inner").sort("score", descending=True)
-    return result_df
+    return result_df.to_dict(as_series=False)
 
 
-def format_recommendation_message(recommended_product_data: pl.DataFrame) -> str:
+def format_recommendation_message(recommended_product_data: dict) -> str:
     msg = "Here are the recommended products based on your preferences: \n"
-    for row in recommended_product_data.iter_rows(named=True):
-        msg += f"""{row["title"]} - {row["final_price"]}\n"""
+    for title, price in zip(recommended_product_data["title"], recommended_product_data["final_price"]):
+        msg += f"""{title} - {price}\n"""
     return msg

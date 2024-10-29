@@ -37,7 +37,7 @@ class State(TypedDict):
 
     customer_preference: CustomerPreference
     recommendation: Recommendation
-    recommended_product_data: pl.DataFrame
+    recommended_product_data: dict
 
 
 def manage_state(state: State) -> State:
@@ -161,7 +161,6 @@ llm = build_llm()
 llm_with_preference_tools = llm.bind_tools([CustomerPreference])
 builder = shopping_buddy_graph_builder()
 graph = shopping_buddy_graph(builder)
-print(graph.get_graph().draw_mermaid())
 
 
 def print_buddy_response(input_message_list: list, config: dict):
