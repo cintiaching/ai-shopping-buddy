@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 import os
 import polars as pl
 
+from databricks.sdk.runtime import spark
+
 load_dotenv()  # Load environment variables from .env file
 
 # programmatically detect if running on databricks
