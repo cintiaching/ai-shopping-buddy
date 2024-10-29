@@ -40,7 +40,7 @@ source_table_fullname = f"{catalog_name}.{schema_name}.{source_table_name}"
 
 # COMMAND ----------
 
-from chatbots.vectorstore.vector_search import preprocess_product_data
+from chatbots.preprocess_data.vector_search import preprocess_product_data
 
 data = spark.table(source_table_fullname)
 data = preprocess_product_data(data)
