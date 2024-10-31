@@ -11,9 +11,12 @@ from langgraph.graph import StateGraph, START, add_messages
 
 from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference, \
     format_customer_preference
+from chatbots.get_related_product import RelatedProductPreference, get_related_product_preference, \
+    parse_related_product_preference, format_related_product_preference
 from chatbots.llm import build_llm
 from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, \
-    retrieve_recommended_product_data, format_recommendation_message
+    retrieve_recommended_product_data, format_recommendation_message, \
+    format_relate_product_message
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
@@ -38,6 +41,10 @@ class State(TypedDict):
     customer_preference: CustomerPreference
     recommendation: Recommendation
     recommended_product_data: dict
+
+    related_product_preference: RelatedProductPreference
+    related_product_recommendation: Recommendation
+    related_product_data: dict
 
 
 def manage_state(state: State) -> State:
@@ -130,6 +137,48 @@ def recommend(state: State):
     return state
 
 
+def related_router(state: State) -> str:
+    if state["recommended_product_data"] is None:
+        logger.debug("ROUTER: to the end")
+        return END
+    else:
+        logger.debug("ROUTER: find_related_products")
+        return "find_related_products"
+    
+
+def find_related_products(state: State) -> State:
+    logger.debug("----------find_related_products----------")
+    system_messages = get_related_product_preference(state["customer_preference"])
+    response = llm_with_product_tools.invoke(system_messages)
+    state["messages"] = add_messages(state["messages"], [response])
+    state["related_product_preference"] = parse_related_product_preference(response.tool_calls[0]["args"])
+    state["messages"] = add_messages(state["messages"], [
+        ToolMessage(
+            content="Related Product Preference gathered",
+            tool_call_id=state["messages"][-1].tool_calls[0]["id"],
+        )
+    ])
+    query_text = format_related_product_preference(state["related_product_preference"])
+    # vector search
+    search_result = vector_search_product(query_text, columns=["product_id", "title", "text"])
+    product_ids, similarity = process_search_result(search_result)
+    if len(product_ids):
+        state["related_product_recommendation"] = Recommendation(product_ids=product_ids, score=similarity)
+        logger.debug(f"related product recommendations: {state['related_product_recommendation']}")
+    
+    return state
+
+def recommend_related_product(state: State) -> State:
+    logger.debug("----------recommend_related_product----------")
+    if "related_product_recommendation" in state:
+    
+        state["related_product_data"] = retrieve_recommended_product_data(state["related_product_recommendation"])
+        state["messages"] = add_messages(state["messages"],
+                                        AIMessage(
+                                            content=format_relate_product_message(state["related_product_data"])))
+    return state
+
+
 def shopping_buddy_graph_builder():
     builder = StateGraph(State)
     builder.add_node("get_preference", get_preference)
@@ -138,6 +187,8 @@ def shopping_buddy_graph_builder():
     builder.add_node("gather_preference", gather_preference)
     builder.add_node("match_products", match_products)
     builder.add_node("recommend", recommend)
+    builder.add_node("find_related_products", find_related_products)
+    builder.add_node("recommend_related_product", recommend_related_product)
 
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
@@ -145,7 +196,9 @@ def shopping_buddy_graph_builder():
     builder.add_conditional_edges("get_preference", preference_router, ["gather_preference", "get_preference", END])
     builder.add_edge("gather_preference", "match_products")
     builder.add_edge("match_products", "recommend")
-    builder.add_edge("recommend", END)
+    builder.add_conditional_edges("recommend", related_router, ["find_related_products", END])
+    builder.add_edge("find_related_products", "recommend_related_product")
+    builder.add_edge("recommend_related_product", END)
     return builder
 
 
@@ -159,6 +212,7 @@ def shopping_buddy_graph(builder):
 # global object
 llm = build_llm()
 llm_with_preference_tools = llm.bind_tools([CustomerPreference])
+llm_with_product_tools = llm.bind_tools([RelatedProductPreference])
 builder = shopping_buddy_graph_builder()
 graph = shopping_buddy_graph(builder)
 
