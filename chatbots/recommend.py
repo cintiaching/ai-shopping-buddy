@@ -15,6 +15,7 @@ class Recommendation(BaseModel):
 
 
 def retrieve_recommended_product_data(recommendation: Recommendation) -> dict:
+    """Get product attributes from Recommendation object"""
     score_df = pl.DataFrame({
         "product_id": recommendation.product_ids,
         "score": recommendation.score
@@ -25,6 +26,7 @@ def retrieve_recommended_product_data(recommendation: Recommendation) -> dict:
 
 
 def format_recommendation_message(recommended_product_data: dict) -> str:
+    """Format final recommendation message"""
     msg = "Here are the recommended products based on your preferences: \n"
     for title, price in zip(recommended_product_data["title"], recommended_product_data["final_price"]):
         msg += f"""{title} - {price}\n"""
