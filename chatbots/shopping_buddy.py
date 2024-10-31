@@ -260,16 +260,18 @@ def shopping_buddy(user_message: str, thread_id: int = 1) -> str:
     config = {"configurable": {"thread_id": thread_id}}
 
     # empty input for involving greeting
-    empty_input = []
-    for event in graph.stream({"messages": empty_input}, config=config):
-        for value in event.values():
-            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
-                yield value["messages"][-1].content
+    if user_message == "":
+        for event in graph.stream({"messages": []}, config=config):
+            for value in event.values():
+                if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
+                    yield value["messages"][-1].content
 
     for event in graph.stream({"messages": [("user", user_message)]}, config=config):
         for value in event.values():
-            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
+            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage) and not value["messages"][-1].tool_calls:
                 yield value["messages"][-1].content
+            else:
+                shopping_buddy(user_message, thread_id = 1)
 
 
 # for development
