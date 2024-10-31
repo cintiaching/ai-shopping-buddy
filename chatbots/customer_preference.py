@@ -1,4 +1,4 @@
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, ToolMessage, HumanMessage
 from pydantic import BaseModel
 
 template = """Your job is to get product preference from a customer about what type of electronic product they want to buy.
@@ -18,7 +18,7 @@ give the customer a summary of the gathered preference and call the gather_prefe
 
 def get_customer_preference_prompt(messages):
     """Get the prompt for gathering customer preference"""
-    return [SystemMessage(content=template)] + messages[1:]  # omit greeting message
+    return [SystemMessage(content=template)] + [[m for m in messages if isinstance(m, HumanMessage)][-1]]
 
 
 class CustomerPreference(BaseModel):

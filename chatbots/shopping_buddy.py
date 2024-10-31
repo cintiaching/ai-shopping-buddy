@@ -167,12 +167,12 @@ def find_related_products(state: State) -> State:
     logger.debug("----------find_related_products----------")
     system_messages = get_related_product_preference(state["customer_preference"])
     response = llm_with_product_tools.invoke(system_messages)
-    state["messages"] = add_messages(state["messages"], [response])
+    # state["messages"] = add_messages(state["messages"], [response])
     state["related_product_preference"] = parse_related_product_preference(response.tool_calls[0]["args"])
     state["messages"] = add_messages(state["messages"], [
         ToolMessage(
             content="Related Product Preference gathered",
-            tool_call_id=state["messages"][-1].tool_calls[0]["id"],
+            tool_call_id=response.tool_calls[0]["id"],
         )
     ])
     related_product_preference = format_related_product_preference(state["related_product_preference"])
@@ -200,6 +200,9 @@ def recommend_related_products(state: State) -> State:
     logger.debug("----------recommend_related_products---------")
     if "related_product_recommendation" in state:
         state["related_product_data"] = retrieve_recommended_product_data(state["related_product_recommendation"])
+        state["messages"] = add_messages(state["messages"],
+                                         HumanMessage(
+                                             content="Show me related Products"))
         state["messages"] = add_messages(state["messages"],
                                          AIMessage(
                                              content=format_relate_product_message(state["related_product_data"])))
@@ -275,7 +278,8 @@ def print_buddy_response(input_message_list: list, config: dict):
         for value in event.values():
             logger.debug(value)
             if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
-                print("Shopping Buddy:", value["messages"][-1].content)
+                if value["messages"][-1].type != "tool_call":
+                    print("Shopping Buddy:", value["messages"][-1].content)
                 if value["messages"][-1].tool_calls:
                     logger.debug(f"TOOL_CALLS: {value['messages'][-1].tool_calls}")
 
