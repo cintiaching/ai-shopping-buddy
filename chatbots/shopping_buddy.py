@@ -8,8 +8,12 @@ from typing_extensions import TypedDict
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, add_messages
 
-from chatbots.get_preference import CustomerPreference, get_customer_preference, parse_customer_preference, \
-    format_customer_preference
+from chatbots.customer_preference import (
+    CustomerPreference,
+    get_customer_preference_prompt,
+    parse_customer_preference,
+    format_customer_preference,
+)
 from chatbots.llm import build_llm
 from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, \
      retrieve_recommended_product_data, format_recommendation_message
@@ -76,7 +80,7 @@ def greeting(state: State) -> State:
 def gather_preference(state: State) -> State:
     """Get user preference"""
     logger.debug("----------get_preference----------")
-    system_messages = get_customer_preference(state["messages"])
+    system_messages = get_customer_preference_prompt(state["messages"])
     response = llm_with_preference_tools.invoke(system_messages)
     state["messages"] = add_messages(state["messages"], [response])
     return state

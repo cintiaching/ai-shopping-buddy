@@ -16,8 +16,9 @@ After you are able to discern all the information,
 give the customer a summary of the gathered preference and call the get_preference tool."""
 
 
-def get_customer_preference(messages):
-    return [SystemMessage(content=template)] + messages[1:] # omit greeting message
+def get_customer_preference_prompt(messages):
+    """Get the prompt for gathering customer preference"""
+    return [SystemMessage(content=template)] + messages[1:]  # omit greeting message
 
 
 class CustomerPreference(BaseModel):
@@ -39,7 +40,7 @@ def parse_customer_preference(args: dict) -> CustomerPreference:
 
 
 def format_customer_preference(customer_preference: CustomerPreference) -> str:
-    """Format the given CustomerPreference into a string representation"""
+    """Format the given CustomerPreference into a string representation, for vector search"""
     string = (f"Product Brand: {customer_preference.brand}"
               f"Product Category: {customer_preference.product_category} \n"
               f"Features: {customer_preference.features}"
