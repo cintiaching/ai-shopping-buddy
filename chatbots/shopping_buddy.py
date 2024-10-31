@@ -160,7 +160,7 @@ def find_related_products(state: State) -> State:
     ])
     query_text = format_related_product_preference(state["related_product_preference"])
     # vector search
-    search_result = vector_search_product(query_text, columns=["product_id", "title", "text"])
+    search_result = vector_search_product(query_text, columns=["product_id", "title", "text"], num_results=3)
     product_ids, similarity = process_search_result(search_result)
     if len(product_ids):
         state["related_product_recommendation"] = Recommendation(product_ids=product_ids, score=similarity)
