@@ -30,6 +30,7 @@ graph TD;
 	gather_preference -.-> __end__;
 	recommend -.-> find_related_products;
 	recommend -.-> __end__;
+	gather_preference -.-> gather_preference;
 	classDef default fill:#1e1e1e, stroke:#ffffff, color:#ffffff;
     classDef first fill:#4a4a4a, color:#ffffff;
     classDef last fill:#3b3b3b, color:#ffffff;
