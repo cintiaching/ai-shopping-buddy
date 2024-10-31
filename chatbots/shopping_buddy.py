@@ -15,9 +15,12 @@ from chatbots.customer_preference import (
     format_customer_preference,
 )
 from chatbots.llm import build_llm
-from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, \
-     retrieve_recommended_product_data, format_recommendation_message
-from chatbots.utils.utils import display_langgraph
+from chatbots.recommend import (
+    Recommendation,
+    NO_RECOMMENDATION_MESSAGE,
+    retrieve_recommended_product_data,
+    format_recommendation_message
+)
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
@@ -152,7 +155,8 @@ def shopping_buddy_graph_builder():
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
     builder.add_conditional_edges("greeting", greeting_router, [END, "gather_preference"])
-    builder.add_conditional_edges("gather_preference", preference_router, ["parse_preference", "gather_preference", END])
+    builder.add_conditional_edges("gather_preference", preference_router,
+                                  ["parse_preference", "gather_preference", END])
     builder.add_edge("parse_preference", "match_products")
     builder.add_edge("match_products", "recommend")
     builder.add_edge("recommend", END)
@@ -171,9 +175,33 @@ llm = build_llm()
 llm_with_preference_tools = llm.bind_tools([CustomerPreference])
 builder = shopping_buddy_graph_builder()
 graph = shopping_buddy_graph(builder)
-display_langgraph(graph)
 
 
+# for frontend
+def shopping_buddy(user_message: str, thread_id: int = 1) -> str:
+    """
+    Generator function that yields chatbot response based on user message.
+    Default first output is greeting message
+    :param user_message: str
+    :param thread_id: int (default 1), update thread_id to clear memory
+    :yield: (str) chatbot response
+    """
+    config = {"configurable": {"thread_id": thread_id}}
+
+    # empty input for involving greeting
+    empty_input = []
+    for event in graph.stream({"messages": empty_input}, config=config):
+        for value in event.values():
+            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
+                yield value["messages"][-1].content
+
+    for event in graph.stream({"messages": [("user", user_message)]}, config=config):
+        for value in event.values():
+            if len(value["messages"]) > 0 and isinstance(value["messages"][-1], AIMessage):
+                yield value["messages"][-1].content
+
+
+# for development
 def print_buddy_response(input_message_list: list, config: dict):
     for event in graph.stream({"messages": input_message_list}, config=config):
         for value in event.values():
