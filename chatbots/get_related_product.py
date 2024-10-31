@@ -1,5 +1,3 @@
-from typing import Optional, List
-
 from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 
@@ -43,7 +41,6 @@ def parse_related_product_preference(args: dict) -> RelatedProductPreference:
 def format_related_product_preference(related_product_preference: RelatedProductPreference) -> list:
     """Format the given RelatedProductPreference into a list representation"""
     preference_list = [f"Product Category 1: {related_product_preference.product_category_1}",
-              f"Product Category 2: {related_product_preference.product_category_2}",
-              f"Product Category 3: {related_product_preference.product_category_3}"]
+                       f"Product Category 2: {related_product_preference.product_category_2}",
+                       f"Product Category 3: {related_product_preference.product_category_3}"]
     return preference_list
-

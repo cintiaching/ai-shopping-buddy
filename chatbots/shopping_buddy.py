@@ -8,8 +8,12 @@ from typing_extensions import TypedDict
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, add_messages
 
-from chatbots.get_related_product import RelatedProductPreference, get_related_product_preference, \
-    parse_related_product_preference, format_related_product_preference
+from chatbots.get_related_product import (
+    RelatedProductPreference,
+    get_related_product_preference,
+    parse_related_product_preference,
+    format_related_product_preference,
+)
 from chatbots.customer_preference import (
     CustomerPreference,
     get_customer_preference_prompt,
@@ -191,14 +195,14 @@ def find_related_products(state: State) -> State:
 
     return state
 
+
 def recommend_related_product(state: State) -> State:
     logger.debug("----------recommend_related_product----------")
     if "related_product_recommendation" in state:
-
         state["related_product_data"] = retrieve_recommended_product_data(state["related_product_recommendation"])
         state["messages"] = add_messages(state["messages"],
-                                        AIMessage(
-                                            content=format_relate_product_message(state["related_product_data"])))
+                                         AIMessage(
+                                             content=format_relate_product_message(state["related_product_data"])))
     return state
 
 
