@@ -13,7 +13,7 @@ You should get the following information from them:
 If you are not able to discern this info, ask them to clarify! Do not attempt to wildly guess.
 Put None if customer did not give the desired information after asking. 
 After you are able to discern all the information, 
-give the customer a summary of the gathered preference and call the get_preference tool."""
+give the customer a summary of the gathered preference and call the gather_preference tool."""
 
 
 def get_customer_preference_prompt(messages):

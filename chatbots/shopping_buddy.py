@@ -75,8 +75,8 @@ def greeting_router(state: State) -> str:
         logger.debug("ROUTER: to the end")
         return END
     else:
-        logger.debug("ROUTER: get_preference")
-        return "get_preference"
+        logger.debug("ROUTER: gather_preference")
+        return "gather_preference"
 
 
 def greeting(state: State) -> State:
@@ -93,7 +93,7 @@ def greeting(state: State) -> State:
 
 def gather_preference(state: State) -> State:
     """Get user preference"""
-    logger.debug("----------get_preference----------")
+    logger.debug("----------gather_preference----------")
     system_messages = get_customer_preference_prompt(state["messages"])
     response = llm_with_preference_tools.invoke(system_messages)
     state["messages"] = add_messages(state["messages"], [response])
@@ -102,7 +102,7 @@ def gather_preference(state: State) -> State:
 
 def parse_preference(state: State):
     """Parse user preference"""
-    logger.debug("----------gather_preference----------")
+    logger.debug("----------parse_preference----------")
     state["customer_preference"] = parse_customer_preference(state["messages"][-1].tool_calls[0]["args"])
     state["messages"] = add_messages(state["messages"], [
         ToolMessage(
