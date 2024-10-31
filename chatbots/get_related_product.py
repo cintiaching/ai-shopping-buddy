@@ -18,8 +18,8 @@ Please ensure your categories are well-defined and directly related to the prefe
 """
 
 
-def get_related_product_preference(messages):
-    return [SystemMessage(content=template)] + [f"Recommended Product: {messages}"]
+def get_related_product_preference(customer_preference):
+    return [SystemMessage(content=template)] + [f"Recommended Product: {customer_preference}"]
 
 
 class RelatedProductPreference(BaseModel):
