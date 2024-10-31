@@ -196,8 +196,8 @@ def find_related_products(state: State) -> State:
     return state
 
 
-def recommend_related_product(state: State) -> State:
-    logger.debug("----------recommend_related_product----------")
+def recommend_related_products(state: State) -> State:
+    logger.debug("----------recommend_related_products---------")
     if "related_product_recommendation" in state:
         state["related_product_data"] = retrieve_recommended_product_data(state["related_product_recommendation"])
         state["messages"] = add_messages(state["messages"],
@@ -215,7 +215,7 @@ def shopping_buddy_graph_builder():
     builder.add_node("match_products", match_products)
     builder.add_node("recommend", recommend)
     builder.add_node("find_related_products", find_related_products)
-    builder.add_node("recommend_related_product", recommend_related_product)
+    builder.add_node("recommend_related_products", recommend_related_products)
 
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
@@ -225,8 +225,8 @@ def shopping_buddy_graph_builder():
     builder.add_edge("parse_preference", "match_products")
     builder.add_edge("match_products", "recommend")
     builder.add_conditional_edges("recommend", related_router, ["find_related_products", END])
-    builder.add_edge("find_related_products", "recommend_related_product")
-    builder.add_edge("recommend_related_product", END)
+    builder.add_edge("find_related_products", "recommend_related_products")
+    builder.add_edge("recommend_related_products", END)
     return builder
 
 
