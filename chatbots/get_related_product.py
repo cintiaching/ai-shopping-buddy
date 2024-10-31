@@ -4,10 +4,19 @@ from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 
 template = """
-Your job is to get 3 product categories based on the given product preference.
+Task: Provide Product Categories Based on Customer Preferences
 
-Given the recommended product data provide only three product category with most related accessories of recommended product preference.
-- Product Category: Which type of electronic product are the related accessories belongs to?
+Your objective is to extract three product categories based on the provided product preference data.
+
+Instructions:
+
+Review the recommended product preference carefully.
+Identify the three most relevant product categories.
+Include the associated accessories that align with product preference category.
+Output Format:
+
+Product Category: Specify the type of electronic product the related accessories belong to.
+Please ensure your categories are well-defined and directly related to the preferences given.
 """
 
 
@@ -31,10 +40,10 @@ def parse_related_product_preference(args: dict) -> RelatedProductPreference:
     return RelatedProductPreference(**related_product_preference_data)
 
 
-def format_related_product_preference(related_product_preference: RelatedProductPreference) -> str:
-    """Format the given RelatedProductPreference into a string representation"""
-    string = (f"Product Category 1: {related_product_preference.product_category_1}"
-              f"Product Category 2: {related_product_preference.product_category_2} \n"
-              f"Product Category 3: {related_product_preference.product_category_3}")
-    return string
+def format_related_product_preference(related_product_preference: RelatedProductPreference) -> list:
+    """Format the given RelatedProductPreference into a list representation"""
+    preference_list = [f"Product Category 1: {related_product_preference.product_category_1}",
+              f"Product Category 2: {related_product_preference.product_category_2}",
+              f"Product Category 3: {related_product_preference.product_category_3}"]
+    return preference_list
 

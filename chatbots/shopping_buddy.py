@@ -158,12 +158,22 @@ def find_related_products(state: State) -> State:
             tool_call_id=state["messages"][-1].tool_calls[0]["id"],
         )
     ])
-    query_text = format_related_product_preference(state["related_product_preference"])
+    related_product_preference = format_related_product_preference(state["related_product_preference"])
     # vector search
-    search_result = vector_search_product(query_text, columns=["product_id", "title", "text"], num_results=3)
-    product_ids, similarity = process_search_result(search_result)
+    product_id_list = []
+    similarity_list = []
+    for product in related_product_preference:
+        search_result = vector_search_product(product, columns=["product_id", "title", "text"], num_results=5)
+        product_ids, similarities = process_search_result(search_result)
+        for product_id, similarity in zip(product_ids, similarities):
+            if product_id in product_id_list:
+                continue
+            else:
+                product_id_list.append(product_id)
+                similarity_list.append(similarity)
+                break
     if len(product_ids):
-        state["related_product_recommendation"] = Recommendation(product_ids=product_ids, score=similarity)
+        state["related_product_recommendation"] = Recommendation(product_ids=product_id_list, score=similarity_list)
         logger.debug(f"related product recommendations: {state['related_product_recommendation']}")
     
     return state
