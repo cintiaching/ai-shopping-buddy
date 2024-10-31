@@ -2,34 +2,46 @@
 An e-commerce conversational chatbot that gathers customer preferences to provide personalized product recommendations. 
 Developed for "Generative AI World Cup 2024: So you think you can hack" by Databricks.
 
+## Agent Graph
+The graph below illustrates the implemented logic of the shopping buddy's agentic service.
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'linear'}}}%%
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	gather_preference(gather_preference)
+	manage_state(manage_state)
+	greeting(greeting)
+	parse_preference(parse_preference)
+	match_products(match_products)
+	recommend(recommend)
+	find_related_products(find_related_products)
+	recommend_related_products(recommend_related_products)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> manage_state;
+	find_related_products --> recommend_related_products;
+	manage_state --> greeting;
+	match_products --> recommend;
+	parse_preference --> match_products;
+	recommend_related_products --> __end__;
+	greeting -.-> __end__;
+	greeting -.-> gather_preference;
+	gather_preference -.-> parse_preference;
+	gather_preference -.-> __end__;
+	recommend -.-> find_related_products;
+	recommend -.-> __end__;
+	classDef default fill:#1e1e1e, stroke:#ffffff, color:#ffffff;
+    classDef first fill:#4a4a4a, color:#ffffff;
+    classDef last fill:#3b3b3b, color:#ffffff;
+    classDef node fill:#2c2c2c, stroke:#ffffff, color:#ffffff;
+```
+
 ## ☁️ Databricks Setup
 
 1. Refer to "Accessing the Dataset" section to obtain access to the dataset
-2. Get the Serving endpoints of `databricks-dbrx-instruct` on databricks
-3. Execute the `main.py` notebook, which serves as the entry script for the chatbot, to start chatting.
-
-
-## 💻 Local Setup
-
-To run the chatbot locally, follow these steps to set up the environment.
-
-1. Install Dependencies
-    ```bash
-    pip install -r requirement-dev.txt
-    ```
-
-2. Pull the Ollama Model
-    ```bash
-    ollama pull mistral
-    ```
-   The [mistral](https://ollama.com/library/mistral) model is used as it is small and runs fast locally. 
-   It can be easily switch to other models in the Ollama library.
-
-
-3. To interact with the chatbot, run
-   ```bash
-   python chatbots/shopping_buddy.py
-   ```
+2. Get the Serving endpoints of `databricks-meta-llama-3-1-70b-instruct` on databricks
+3. Run `vectorstore/create_vectorstore.py`
+4. Execute the `main.py` notebook, which serves as the entry script for the chatbot, to start chatting.
 
 ## 🗂️ Dataset
 
