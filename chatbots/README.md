@@ -13,16 +13,21 @@ graph TD;
 	gather_preference(gather_preference)
 	match_products(match_products)
 	recommend(recommend)
+	find_related_products(find_related_products)
+	recommend_related_product(recommend_related_product)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> manage_state;
+	find_related_products --> recommend_related_product;
 	gather_preference --> match_products;
 	manage_state --> greeting;
 	match_products --> recommend;
-	recommend --> __end__;
+	recommend_related_product --> __end__;
 	greeting -.-> __end__;
 	greeting -.-> get_preference;
 	get_preference -.-> gather_preference;
 	get_preference -.-> __end__;
+	recommend -.-> find_related_products;
+	recommend -.-> __end__;
 	get_preference -.-> get_preference;
 	classDef default fill:#1e1e1e, stroke:#ffffff, color:#ffffff;
     classDef first fill:#4a4a4a, color:#ffffff;
