@@ -1,6 +1,5 @@
 import logging
 from typing import Annotated, Optional
-import polars as pl
 
 from langchain_core.messages import AnyMessage, AIMessage, ToolMessage, HumanMessage
 from langgraph.constants import END
@@ -13,7 +12,8 @@ from chatbots.get_preference import CustomerPreference, get_customer_preference,
     format_customer_preference
 from chatbots.llm import build_llm
 from chatbots.recommend import Recommendation, NO_RECOMMENDATION_MESSAGE, \
-    retrieve_recommended_product_data, format_recommendation_message
+     retrieve_recommended_product_data, format_recommendation_message
+from chatbots.utils.utils import display_langgraph
 from chatbots.vectorstore.vector_search import vector_search_product, process_search_result
 
 logger = logging.getLogger("chatbots")
@@ -41,8 +41,8 @@ class State(TypedDict):
 
 
 def manage_state(state: State) -> State:
-    logger.debug("----------manage_state----------")
     """Helper function to manage the state of the graph during back-and-forth conversation"""
+    logger.debug("----------manage_state----------")
     if len(state["messages"]) <= 1:
         # empty input / only greeting message
         state["current_user_input"] = None
@@ -52,6 +52,7 @@ def manage_state(state: State) -> State:
 
 
 def greeting_router(state: State) -> str:
+    """Conditional edge function after greeting node"""
     if state["current_user_input"] is None:
         logger.debug("ROUTER: to the end")
         return END
@@ -72,7 +73,8 @@ def greeting(state: State) -> State:
     return state
 
 
-def get_preference(state: State) -> State:
+def gather_preference(state: State) -> State:
+    """Get user preference"""
     logger.debug("----------get_preference----------")
     system_messages = get_customer_preference(state["messages"])
     response = llm_with_preference_tools.invoke(system_messages)
@@ -80,7 +82,8 @@ def get_preference(state: State) -> State:
     return state
 
 
-def gather_preference(state: State):
+def parse_preference(state: State):
+    """Parse user preference"""
     logger.debug("----------gather_preference----------")
     state["customer_preference"] = parse_customer_preference(state["messages"][-1].tool_calls[0]["args"])
     state["messages"] = add_messages(state["messages"], [
@@ -93,18 +96,20 @@ def gather_preference(state: State):
 
 
 def preference_router(state):
+    """Conditional edge for whether to continue to ask for user preference, move on to parsing or END"""
     messages = state["messages"]
     if isinstance(messages[-1], AIMessage) and messages[-1].tool_calls:
-        logger.debug("ROUTER: gather_preference")
-        return "gather_preference"
+        logger.debug("ROUTER: parse_preference")
+        return "parse_preference"
     elif not isinstance(messages[-1], HumanMessage):
         logger.debug("ROUTER: END")
         return END
-    logger.debug("ROUTER: get_preference")
-    return "get_preference"
+    logger.debug("ROUTER: gather_preference")
+    return "gather_preference"
 
 
 def match_products(state: State):
+    """Match products to user preference"""
     logger.debug("----------match_product----------")
     # format customer_preference
     query_text = format_customer_preference(state["customer_preference"])
@@ -118,6 +123,7 @@ def match_products(state: State):
 
 
 def recommend(state: State):
+    """Display recommendations"""
     logger.debug("----------recommend----------")
     if "recommendation" not in state:
         # no recommendation
@@ -132,18 +138,18 @@ def recommend(state: State):
 
 def shopping_buddy_graph_builder():
     builder = StateGraph(State)
-    builder.add_node("get_preference", get_preference)
+    builder.add_node("gather_preference", gather_preference)
     builder.add_node("manage_state", manage_state)
     builder.add_node("greeting", lambda state: greeting(state))
-    builder.add_node("gather_preference", gather_preference)
+    builder.add_node("parse_preference", parse_preference)
     builder.add_node("match_products", match_products)
     builder.add_node("recommend", recommend)
 
     builder.add_edge(START, "manage_state")
     builder.add_edge("manage_state", "greeting")
-    builder.add_conditional_edges("greeting", greeting_router, [END, "get_preference"])
-    builder.add_conditional_edges("get_preference", preference_router, ["gather_preference", "get_preference", END])
-    builder.add_edge("gather_preference", "match_products")
+    builder.add_conditional_edges("greeting", greeting_router, [END, "gather_preference"])
+    builder.add_conditional_edges("gather_preference", preference_router, ["parse_preference", "gather_preference", END])
+    builder.add_edge("parse_preference", "match_products")
     builder.add_edge("match_products", "recommend")
     builder.add_edge("recommend", END)
     return builder
@@ -161,6 +167,7 @@ llm = build_llm()
 llm_with_preference_tools = llm.bind_tools([CustomerPreference])
 builder = shopping_buddy_graph_builder()
 graph = shopping_buddy_graph(builder)
+display_langgraph(graph)
 
 
 def print_buddy_response(input_message_list: list, config: dict):

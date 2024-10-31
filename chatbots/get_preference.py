@@ -1,5 +1,3 @@
-from typing import Optional, List
-
 from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 
