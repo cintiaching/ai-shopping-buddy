@@ -31,3 +31,9 @@ def format_recommendation_message(recommended_product_data: dict) -> str:
     for title, price in zip(recommended_product_data["title"], recommended_product_data["final_price"]):
         msg += f"""{title} - {price}\n"""
     return msg
+
+def format_relate_product_message(related_product_data: dict) -> str:
+    msg = "Here are the related products that you may also like: \n"
+    for title, price in zip(related_product_data["title"], related_product_data["final_price"]):
+        msg += f"""{title} - {price}\n"""
+    return msg
