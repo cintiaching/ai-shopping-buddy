@@ -15,3 +15,5 @@ python-dotenv
 typing_extensions==4.12.2
 
 databricks-vectorsearch
+
+gradio
