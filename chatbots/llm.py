@@ -8,16 +8,9 @@ if not IS_DATABRICKS:
 
 
 def build_llm(model_name="databricks-dbrx-instruct") -> BaseChatModel:
-    if IS_DATABRICKS:
-        llm = ChatDatabricks(
-            target_uri="databricks",
-            endpoint=model_name,
-            temperature=0,
-        )
-    else:
-        # for local development purpose
-        llm = ChatOllama(
-            model="mistral",
-            temperature=0,
-        )
+    llm = ChatDatabricks(
+        target_uri="databricks",
+        endpoint=model_name,
+        temperature=0,
+    )
     return llm

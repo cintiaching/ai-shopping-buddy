@@ -2,12 +2,12 @@ from dotenv import load_dotenv
 import os
 import polars as pl
 
-from databricks.sdk.runtime import spark
-
 load_dotenv()  # Load environment variables from .env file
 
 # programmatically detect if running on databricks
 IS_DATABRICKS: bool = "DATABRICKS_RUNTIME_VERSION" in os.environ
+if IS_DATABRICKS:
+    from databricks.sdk.runtime import spark
 
 DATA_DIRECTORY = os.environ.get("DATA_DIRECTORY")
 
